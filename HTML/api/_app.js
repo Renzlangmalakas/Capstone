@@ -877,7 +877,12 @@ async function writeClinicDbToSupabase(db = {}) {
 
   if (rawTableColumns.notifications) {
     const rawRows = rows.map((record) => buildRawRow(record, "notifications"));
-    const { error: deleteError } = await supabase.from("notifications").delete();
+    // Postgres rejects an unfiltered DELETE ("DELETE requires a WHERE clause"),
+    // so match every row explicitly the same way the keyed tables above do.
+    const { error: deleteError } = await supabase
+      .from("notifications")
+      .delete()
+      .not("id", "is", null);
     if (deleteError) {
       if (isMissingSupabaseTable(deleteError)) return;
       throw deleteError;
