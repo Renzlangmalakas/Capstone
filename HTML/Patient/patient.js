@@ -7669,6 +7669,14 @@ function getSelectedServiceDetails() {
   };
 }
 
+const CHATBOT_API_BASE_URL =
+  window.GM_DENTAL_API_BASE ||
+  localStorage.getItem("gm_dental_api_base") ||
+  (window.GmDentalSupabaseSync && window.GmDentalSupabaseSync.apiBaseUrl) ||
+  (window.location.protocol === "file:" || ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    ? "http://localhost:3000"
+    : "");
+
 function getChatbotPageContext() {
   const activeView = document.querySelector(".view.active")?.id || "dashboard";
   const currentUser = JSON.parse(sessionStorage.getItem("gm_dental_current_user") || "null");
@@ -7709,7 +7717,7 @@ async function sendChatbotMessage(customText = "") {
   try {
     const context = getChatbotPageContext();
 
-    const response = await fetch("http://localhost:3000/api/patient-chat", {
+    const response = await fetch(`${CHATBOT_API_BASE_URL}/api/patient-chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -7769,7 +7777,7 @@ async function askPatientAssistant(message) {
     patientName: JSON.parse(localStorage.getItem("loggedInUser") || "{}")?.name || "Patient"
   };
 
-  const res = await fetch("http://localhost:3000/api/patient-chat", {
+  const res = await fetch(`${CHATBOT_API_BASE_URL}/api/patient-chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

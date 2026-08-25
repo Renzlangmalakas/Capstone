@@ -1,0 +1,7 @@
+node_modules
+.env
+.env.*
+!.env.example
+*.log
+HTML/Landing/supabase/.temp
+HTML/Landing/apply-users-migration.ps1
