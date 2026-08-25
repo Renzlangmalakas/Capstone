@@ -7,7 +7,7 @@ const API_BASE_URL =
   window.location.hostname === "127.0.0.1" ||
   window.location.hostname === "localhost"
     ? "http://localhost:3000"
-    : "https://carpenter-delete-race.ngrok-free.dev";
+    : "";
 
 async function parseJsonResponse(response, endpointLabel = "request") {
   const text = await response.text();

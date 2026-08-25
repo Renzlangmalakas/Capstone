@@ -27,7 +27,7 @@ const API_BASE_URL =
   (window.GmDentalSupabaseSync && window.GmDentalSupabaseSync.apiBaseUrl) ||
   (window.location.protocol === "file:" || ["localhost", "127.0.0.1"].includes(window.location.hostname)
     ? "http://localhost:3000"
-    : "https://carpenter-delete-race.ngrok-free.dev");
+    : "");
 
 function uid() {
   return Math.random().toString(36).slice(2, 11);
