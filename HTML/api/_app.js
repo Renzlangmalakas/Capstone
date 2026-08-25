@@ -234,11 +234,43 @@ function isUuid(value = "") {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 }
 
+// The browser generates local ids with Math.random().toString(36), which are not
+// UUIDs, so those rows used to miss the upsert and get blind-inserted on every
+// sync — one duplicate per push, forever. Map any non-UUID identity onto a
+// deterministic UUIDv5 instead, so the same logical record always resolves to
+// the same primary key and upsert can do its job.
+function deterministicUuid(namespace, seed) {
+  const hash = crypto.createHash("sha1").update(`${namespace}:${seed}`).digest("hex");
+  const variant = ((parseInt(hash[16], 16) & 0x3) | 0x8).toString(16);
+  return [
+    hash.slice(0, 8),
+    hash.slice(8, 12),
+    `5${hash.slice(13, 16)}`,
+    `${variant}${hash.slice(17, 20)}`,
+    hash.slice(20, 32)
+  ].join("-");
+}
+
+// Fallbacks for records that reach us with no id at all (e.g. the placeholder
+// "Assigned Dentist" rows). Matching on a natural key keeps them from
+// multiplying too, at the cost of collapsing genuine same-name records.
+const NATURAL_KEY_FIELDS = ["syncKey", "sync_key", "email", "name", "title"];
+
+function stableRowId(record = {}, tableName) {
+  if (isUuid(record.id)) return record.id;
+
+  const seed = [record.id, ...NATURAL_KEY_FIELDS.map((field) => record[field])]
+    .find((value) => value != null && String(value).trim() !== "");
+
+  return seed == null ? null : deterministicUuid(tableName, String(seed));
+}
+
 function buildRawRow(record = {}, tableName) {
   const columns = rawTableColumns[tableName] || [];
   const row = {};
-  if (isUuid(record.id)) {
-    row.id = record.id;
+  const id = stableRowId(record, tableName);
+  if (id) {
+    row.id = id;
   }
   columns.forEach((col) => {
     if (col === "id") return;
